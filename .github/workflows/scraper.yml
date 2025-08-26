@@ -2,7 +2,10 @@ name: Keep Website Alive
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Runs every 5 minutes
+    # Run every 5 minutes between 5am and 11:59pm UTC (10:30am to 5:29am IST)
+    - cron: '*/5 5-23 * * *'
+    # Run every 10 minutes between 12am and 4:55am UTC (5:30am to 10:25am IST)
+    - cron: '*/10 0-4 * * *'
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
@@ -23,11 +26,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests
     
+    - name: Show current time and timezone
+      run: |
+        echo "Current time: $(date)"
+        echo "Current timezone: $(date +%Z) $(date +%z)"
+        echo "UTC time: $(date -u)"
+    
     - name: Ping website
       run: |
         echo "Starting website ping at $(date)"
+        echo "Workflow run ID: ${{ github.run_id }}"
+        echo "Workflow run number: ${{ github.run_number }}"
         python scraper.py
-      continue-on-error: true  # Don't fail the workflow if the ping fails
+      continue-on-error: true
       
     - name: Show completion
       if: always()
