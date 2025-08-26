@@ -35,13 +35,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Create screenshots directory
+    - name: Setup environment
       run: |
+        # Create screenshots directory with proper permissions
         mkdir -p screenshots
-        touch screenshots/.gitkeep
-    
-    - name: List files before run (debug)
-      run: |
+        chmod -R 777 screenshots
+        
+        # Verify directory was created
         echo "Current directory:"
         pwd
         echo "\nDirectory contents:"
@@ -51,14 +51,20 @@ jobs:
     
     - name: Run website visitor
       run: |
-        # Start virtual display for headless Chrome
+        # Set display environment variable
         export DISPLAY=:99
+        
+        # Start Xvfb in the background
         Xvfb :99 -screen 0 1920x1080x16 &
         
-        # Run the script with debug output
-        python -v scraper.py || echo "Script completed with exit code $?"
+        # Give Xvfb a moment to start
+        sleep 5
         
-        # List files after run (debug)
+        # Run the script with debug output
+        echo "Running script..."
+        python -u scraper.py || echo "Script completed with exit code $?"
+        
+        # Debug: List files after script execution
         echo "\n=== After script execution ==="
         echo "Current directory:"
         pwd
@@ -66,6 +72,13 @@ jobs:
         ls -la
         echo "\nScreenshots directory contents:"
         ls -la screenshots/ || echo "No screenshots directory found"
+        
+        # If no screenshots found, create a test file to verify permissions
+        if [ ! "$(ls -A screenshots/ 2>/dev/null)" ]; then
+          echo "No screenshots found. Testing file creation..."
+          echo "Test file" > screenshots/test.txt
+          ls -la screenshots/
+        fi
       continue-on-error: true
       
     - name: Upload screenshots
@@ -73,6 +86,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: website-screenshots
-        path: screenshots/*.png
+        path: |
+          screenshots/*
+          !screenshots/.gitkeep
         if-no-files-found: warn
         retention-days: 7
