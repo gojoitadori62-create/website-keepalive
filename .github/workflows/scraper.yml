@@ -2,9 +2,7 @@ name: Keep Website Alive
 
 on:
   schedule:
-    # Run every 5 minutes
     - cron: '*/5 * * * *'
-  # Allow manual triggers
   workflow_dispatch:
 
 jobs:
@@ -40,27 +38,27 @@ jobs:
     - name: Create screenshots directory
       run: mkdir -p screenshots
     
-    - name: Visit website
+    - name: Run website visitor
       run: |
         # Start virtual display for headless Chrome
         export DISPLAY=:99
         Xvfb :99 -screen 0 1920x1080x16 &
         
-        # Run the script
-        python scraper.py
-      continue-on-error: true  # Don't fail the workflow if there's an error
-      
-    - name: List files (for debugging)
-      run: |
+        # Run the script with debug output
+        python -v scraper.py || echo "Script completed with exit code $?"
+        
+        # List all files for debugging
+        echo "Current directory contents:"
         ls -la
-        ls -la screenshots/
+        echo "Screenshots directory contents:"
+        ls -la screenshots/ || echo "No screenshots directory found"
+      continue-on-error: true
       
     - name: Upload screenshots
-      if: always()  # Always run this step even if previous steps failed
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: website-screenshots
-        path: |
-          screenshots/
-          !.gitkeep
+        path: screenshots/
+        if-no-files-found: warn
         retention-days: 7
