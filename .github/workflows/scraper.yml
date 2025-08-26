@@ -36,7 +36,18 @@ jobs:
         pip install -r requirements.txt
     
     - name: Create screenshots directory
-      run: mkdir -p screenshots
+      run: |
+        mkdir -p screenshots
+        touch screenshots/.gitkeep
+    
+    - name: List files before run (debug)
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "\nDirectory contents:"
+        ls -la
+        echo "\nScreenshots directory contents:"
+        ls -la screenshots/ || echo "No screenshots directory found"
     
     - name: Run website visitor
       run: |
@@ -47,10 +58,13 @@ jobs:
         # Run the script with debug output
         python -v scraper.py || echo "Script completed with exit code $?"
         
-        # List all files for debugging
-        echo "Current directory contents:"
+        # List files after run (debug)
+        echo "\n=== After script execution ==="
+        echo "Current directory:"
+        pwd
+        echo "\nDirectory contents:"
         ls -la
-        echo "Screenshots directory contents:"
+        echo "\nScreenshots directory contents:"
         ls -la screenshots/ || echo "No screenshots directory found"
       continue-on-error: true
       
@@ -59,6 +73,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: website-screenshots
-        path: screenshots/
+        path: screenshots/*.png
         if-no-files-found: warn
         retention-days: 7
