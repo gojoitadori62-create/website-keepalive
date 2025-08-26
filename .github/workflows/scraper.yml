@@ -37,6 +37,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Create screenshots directory
+      run: mkdir -p screenshots
+    
     - name: Visit website
       run: |
         # Start virtual display for headless Chrome
@@ -47,10 +50,17 @@ jobs:
         python scraper.py
       continue-on-error: true  # Don't fail the workflow if there's an error
       
+    - name: List files (for debugging)
+      run: |
+        ls -la
+        ls -la screenshots/
+      
     - name: Upload screenshots
       if: always()  # Always run this step even if previous steps failed
       uses: actions/upload-artifact@v4
       with:
         name: website-screenshots
-        path: 'screenshot_*.png'
+        path: |
+          screenshots/
+          !.gitkeep
         retention-days: 7
